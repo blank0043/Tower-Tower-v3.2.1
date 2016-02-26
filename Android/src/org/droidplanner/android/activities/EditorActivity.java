@@ -5,7 +5,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
@@ -73,6 +77,10 @@ public class EditorActivity extends DrawerNavigationUI implements OnPathFinished
     private static final IntentFilter eventFilter = new IntentFilter();
     private static final String MISSION_FILENAME_DIALOG_TAG = "Mission filename";
 
+    // the following are used for retrieving the phone's GPS
+    private TextView textview;
+    private LocationManager locationManager;
+    private LocationListener locationListener;
     static {
         eventFilter.addAction(MissionProxy.ACTION_MISSION_PROXY_UPDATE);
         eventFilter.addAction(AttributeEvent.MISSION_RECEIVED);
@@ -120,6 +128,7 @@ public class EditorActivity extends DrawerNavigationUI implements OnPathFinished
      * If the mission was loaded from a file, the filename is stored here.
      */
     private String openedMissionFilename;
+    private String speechLocation;
 
     private FloatingActionButton itemDetailToggle;
     private EditorListFragment editorListFragment;
@@ -140,6 +149,35 @@ public class EditorActivity extends DrawerNavigationUI implements OnPathFinished
         editorListFragment = (EditorListFragment) fragmentManager.findFragmentById(R.id.mission_list_fragment);
 
         infoView = (TextView) findViewById(R.id.editorInfoWindow);
+
+        //used for GPS phone location
+        textview = (TextView) findViewById(R.id.phoneGPS);
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                textview.append("\n lat: " + location.getLatitude() + ", long: " + location.getLongitude());
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+                Intent intent = new Intent (Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(intent);
+            }
+        };
+
+
+
 
         final FloatingActionButton zoomToFit = (FloatingActionButton) findViewById(R.id.zoom_to_fit_button);
         zoomToFit.setVisibility(View.VISIBLE);
@@ -582,8 +620,13 @@ public class EditorActivity extends DrawerNavigationUI implements OnPathFinished
 
     public void onButtonClick(View v){
         if (v.getId() == R.id.speech_to_text){
-
+            locationManager.requestLocationUpdates("gps", 5, 0, locationListener);
+            Location lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            double longitud = lastLocation.getLongitude();
+            double lat = lastLocation.getLatitude();
+            textview.setText("\n long: "+longitud + " lat: " + lat);
             promptSpeechInput();
+
         }
     }
 
@@ -614,8 +657,20 @@ public class EditorActivity extends DrawerNavigationUI implements OnPathFinished
                 //resultTEXT.setText(result.get(0));
                 String testStringArea = result.get(0);
                 if (testStringArea == "test area"){
-                    int a = 1;
-                    //insert logic to follow up
+                    speechLocation = "test";
+
+                    OpenFileDialog missionDialog = new OpenMissionDialog() {
+                        @Override
+                        public void waypointFileLoaded(MissionReader reader) {
+                            openedMissionFilename = speechLocation + "dpwp";
+
+                            if(missionProxy != null) {
+                                missionProxy.readMissionFromFile(reader);
+                                gestureMapFragment.getMapFragment().zoomToFit();
+                            }
+                        }
+                    };
+                    missionDialog.openDialog(this);
                 }
             }
                 break;

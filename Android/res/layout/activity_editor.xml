@@ -11,7 +11,9 @@
         android:id="@+id/editor_map_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout="@layout/fragment_gesture_map"/>
+        tools:layout="@layout/fragment_gesture_map">
+
+    </FrameLayout>
 
     <org.droidplanner.android.view.FitsSystemWindowsRelativeLayout
         android:layout_width="match_parent"
@@ -43,7 +45,20 @@
             android:layout_alignRight="@+id/actionbar_container"
             android:layout_alignEnd="@+id/actionbar_container"
             />
-
+        <EditText
+            android:layout_width="93dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/phoneGPS"
+            android:layout_gravity="center"
+            android:text="hello"
+            style="@style/editorMissionOverviewText"
+            android:visibility="visible"
+            android:gravity="end"
+            android:layout_below="@+id/editorInfoWindow"
+            android:layout_alignLeft="@+id/actionbar_container"
+            android:layout_alignStart="@+id/actionbar_container"
+            android:layout_alignRight="@+id/actionbar_container"
+            android:layout_alignEnd="@+id/actionbar_container"/>
         <include
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
